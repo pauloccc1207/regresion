@@ -1,0 +1,44 @@
+# app.py
+from flask import Flask, request, jsonify
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return app.send_static_file('index.html')
+
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    try:
+        data = request.json
+        x_values = np.array([float(x) for x in data['x']]).reshape(-1, 1)
+        y_values = np.array([float(y) for y in data['y']])
+
+        # Realizar regresión lineal
+        model = LinearRegression()
+        model.fit(x_values, y_values)
+
+        # Calcular R²
+        r_squared = r2_score(y_values, model.predict(x_values))
+
+        # Calcular puntos para la línea de regresión
+        x_line = np.array([min(x_values), max(x_values)]).reshape(-1, 1)
+        y_line = model.predict(x_line)
+
+        return jsonify({
+            'slope': float(model.coef_[0]),
+            'intercept': float(model.intercept_),
+            'r_squared': float(r_squared),
+            'regression_line': {
+                'x': x_line.flatten().tolist(),
+                'y': y_line.tolist()
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+if __name__ == '__main__':
+    app.run(debug=True)
