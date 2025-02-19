@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráfico de Dispersión con Regresión Lineal</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .quadrant {
+            flex: 1;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .quadrant-full {
+            flex: 2;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+        }
+        button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gráfico de Dispersión con Regresión Lineal</h1>
+    <div class="container">
+        <div class="quadrant">
+            <form id="dataForm" onsubmit="return false;">
+                <textarea id="dataInput" placeholder="Pega aquí tus dos columnas de datos (separados por tabulaciones o espacios)"></textarea>
+                <br>
+                <label for="x_axis_label">Ingrese el nombre del eje de las X:</label>
+                <input type="text" id="x_axis_label" name="x_axis_label">
+                <br>
+                <label for="y_axis_label">Ingrese el nombre del eje de las Y:</label>
+                <input type="text" id="y_axis_label" name="y_axis_label">
+                <br>
+                <button type="button" onclick="enviarDatos()">Generar Gráfico</button>
+            </form>
+        </div>
+        <div class="quadrant">
+            <div id="resultados"></div>
+        </div>
+    </div>
+    <div class="quadrant-full">
+        <div id="grafico"></div>
+    </div>
+
+    <script>
+        function enviarDatos() {
+            const data = document.getElementById('dataInput').value;
+            const x_axis_label = document.getElementById('x_axis_label').value;
+            const y_axis_label = document.getElementById('y_axis_label').value;
+            const [x, y] = data.split('\n').reduce((acc, line) => {
+                const [xVal, yVal] = line.split(/\s+/);
+                acc[0].push(xVal);
+                acc[1].push(yVal);
+                return acc;
+            }, [[], []]);
+
+            fetch('/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ x: x, y: y, x_axis_label: x_axis_label, y_axis_label: y_axis_label }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const trace1 = {
+                    x: data.x,
+                    y: data.y,
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: 'Datos'
+                };
+                const trace2 = {
+                    x: data.regression_line.x,
+                    y: data.regression_line.y,
+                    mode: 'lines',
+                    type: 'scatter',
+                    name: 'Regresión Lineal'
+                };
+                const layout = {
+                    title: 'Gráfico de Dispersión con Regresión Lineal',
+                    xaxis: { title: x_axis_label },
+                    yaxis: { title: y_axis_label }
+                };
+                Plotly.newPlot('grafico', [trace1, trace2], layout);
+
+                document.getElementById('resultados').innerHTML = `
+                    <p>Ecuación de la regresión: y = ${data.slope.toFixed(2)}x + ${data.intercept.toFixed(2)}</p>
+                    <p>R²: ${data.r_squared.toFixed(2)}</p>
+                    <p>Error cuadrático medio: ${data.mse.toFixed(2)}</p>
+                    <p>RMSE (Raíz del error cuadrático medio): ${data.rmse.toFixed(2)}</p>
+                    <h3>Estadísticas de la primera columna:</h3>
+                    <p>Media: ${data.stats.x.mean.toFixed(2)}</p>
+                    <p>Desviación estándar: ${data.stats.x.std.toFixed(2)}</p>
+                    <p>Rango: ${data.stats.x.range.toFixed(2)}</p>
+                    <p>Quartil 1: ${data.stats.x.q1.toFixed(2)}</p>
+                    <p>Mediana: ${data.stats.x.median.toFixed(2)}</p>
+                    <p>Quartil 3: ${data.stats.x.q3.toFixed(2)}</p>
+                    <h3>Estadísticas de la segunda columna:</h3>
+                    <p>Media: ${data.stats.y.mean.toFixed(2)}</p>
+                    <p>Desviación estándar: ${data.stats.y.std.toFixed(2)}</p>
+                    <p>Rango: ${data.stats.y.range.toFixed(2)}</p>
+                    <p>Quartil 1: ${data.stats.y.q1.toFixed(2)}</p>
+                    <p>Mediana: ${data.stats.y.median.toFixed(2)}</p>
+                    <p>Quartil 3: ${data.stats.y.q3.toFixed(2)}</p>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
