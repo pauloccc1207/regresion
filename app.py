@@ -31,6 +31,8 @@ def crear_app():
             # Calcular puntos para la línea de regresión
             x_line = np.array([min(x_values), max(x_values)]).reshape(-1, 1)
             y_line = model.predict(x_line)
+            y_line_plus_rmse = y_line + rmse
+            y_line_minus_rmse = y_line - rmse
 
             # Calcular estadísticas
             def calculate_stats(values):
@@ -56,7 +58,9 @@ def crear_app():
                 'rmse': float(rmse),
                 'regression_line': {
                     'x': x_line.flatten().tolist(),
-                    'y': y_line.tolist()
+                    'y': y_line.tolist(),
+                    'y_plus_rmse': y_line_plus_rmse.tolist(),
+                    'y_minus_rmse': y_line_minus_rmse.tolist()
                 },
                 'stats': stats,
                 'x': x_values.flatten().tolist(),

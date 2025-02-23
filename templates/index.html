@@ -150,12 +150,28 @@
                     type: 'scatter',
                     name: 'Regresión Lineal'
                 };
+                const trace3 = {
+                    x: data.regression_line.x,
+                    y: data.regression_line.y_plus_rmse,
+                    mode: 'lines',
+                    type: 'scatter',
+                    name: 'Regresión + RMSE',
+                    line: { dash: 'dash', color: 'green' }
+                };
+                const trace4 = {
+                    x: data.regression_line.x,
+                    y: data.regression_line.y_minus_rmse,
+                    mode: 'lines',
+                    type: 'scatter',
+                    name: 'Regresión - RMSE',
+                    line: { dash: 'dash', color: 'red' }
+                };
                 const layout = {
                     title: 'Gráfico de Dispersión con Regresión Lineal',
                     xaxis: { title: x_axis_label },
                     yaxis: { title: y_axis_label }
                 };
-                Plotly.newPlot('grafico', [trace1, trace2], layout);
+                Plotly.newPlot('grafico', [trace1, trace2, trace3, trace4], layout);
 
                 document.getElementById('resultados').innerHTML = `
                     <div class="result-card">
